@@ -24,6 +24,8 @@ import { Edit, Delete, Add } from "@mui/icons-material";
 // Change this to your actual table name
 const TABLE_NAME = "price_list";
 
+type TableColumn = { column_name: string };
+
 export default function Home() {
   const [columns, setColumns] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
@@ -50,7 +52,7 @@ export default function Home() {
       } else {
         // fallback: fetch table columns from information_schema
         const { data: cols } = await supabase.rpc("get_table_columns", { table_name: TABLE_NAME });
-        if (cols && cols.length > 0) setColumns(cols.map((c: any) => c.column_name));
+        if (cols && cols.length > 0) setColumns((cols as TableColumn[]).map((c) => c.column_name));
       }
       // Fetch all rows
       const { data: allRows } = await supabase.from(TABLE_NAME).select("*");
