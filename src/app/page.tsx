@@ -26,11 +26,11 @@ const TABLE_NAME = "price_list";
 
 export default function Home() {
   const [columns, setColumns] = useState<string[]>([]);
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editRow, setEditRow] = useState<any | null>(null);
+  const [editRow, setEditRow] = useState<Record<string, unknown> | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newRow, setNewRow] = useState<any>({});
+  const [newRow, setNewRow] = useState<Record<string, unknown>>({});
 
   // Fetch columns and rows
   useEffect(() => {
@@ -61,7 +61,11 @@ export default function Home() {
   }, []);
 
   // Add/Edit helpers
-  const handleInputChange = (e: any, row: any, setRow: any) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    row: Record<string, unknown>,
+    setRow: React.Dispatch<React.SetStateAction<Record<string, unknown>>>
+  ) => {
     setRow({ ...row, [e.target.name]: e.target.value });
   };
 
@@ -87,7 +91,7 @@ export default function Home() {
   };
 
   // Delete row
-  const handleDelete = async (id: any) => {
+  const handleDelete = async (id: string | number) => {
     await supabase.from(TABLE_NAME).delete().eq("id", id);
     // Refresh
     const { data: allRows } = await supabase.from(TABLE_NAME).select("*");
@@ -119,13 +123,13 @@ export default function Home() {
           </TableHead>
           <TableBody>
             {rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={String(row.id)}>
                 {columns.map((col) => (
-                  <TableCell key={col}>{row[col]}</TableCell>
+                  <TableCell key={col}>{String(row[col] ?? "")}</TableCell>
                 ))}
                 <TableCell>
                   <IconButton onClick={() => setEditRow(row)}><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(row.id)}><Delete /></IconButton>
+                  <IconButton onClick={() => handleDelete(row.id as string | number)}><Delete /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -161,7 +165,8 @@ export default function Home() {
       <Dialog open={!!editRow} onClose={() => setEditRow(null)}>
         <DialogTitle>Edit Row</DialogTitle>
         <DialogContent>
-          {columns.map((col) => (
+          {/* Helper to ensure setEditRow is typed for handleInputChange */}
+          {editRow && columns.map((col) => (
             col === "id" ? null : (
               <TextField
                 key={col}
@@ -169,8 +174,8 @@ export default function Home() {
                 label={col}
                 name={col}
                 fullWidth
-                value={editRow?.[col] || ""}
-                onChange={(e) => handleInputChange(e, editRow, setEditRow)}
+                value={editRow[col] || ""}
+                onChange={(e) => handleInputChange(e, editRow, setEditRow as React.Dispatch<React.SetStateAction<Record<string, unknown>>>) }
               />
             )
           ))}
